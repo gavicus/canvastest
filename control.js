@@ -5,6 +5,7 @@ class Control {
 		this.mouseDown = false;
 		this.mouseLast = null;
 		this.initMouseEvents();
+		this.animating = false; // to block input (but allow move of focus)
 	}
 	initMouseEvents(){
 		$('#canvas').mousedown(function(event){
