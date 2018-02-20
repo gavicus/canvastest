@@ -9,6 +9,9 @@ class Point {
 	getDistanceSquared(p){
 		return Math.pow(this.x-p.x, 2) + Math.pow(this.y-p.y, 2);
 	}
+	equals(p){
+		return p.x === this.x && p.y === this.y;
+	}
 	add(p){ // in-place
 		this.x += p.x;
 		this.y += p.y;
@@ -125,6 +128,10 @@ class Map {
 		c.restore();
 	}
 	generateMap(w,h){
+		this.generateBlankMap(w,h);
+		this.generateContourMap();
+	}
+	generateBlankMap(w,h){
 		this.mapColumns = w;
 		this.mapRows = h;
 		this.tiles = [];
@@ -134,6 +141,29 @@ class Map {
 				if(x===0&&y===0){t.type=1;}
 				this.tiles.push(t);
 			}
+		}
+	}
+	generateContourMap(){
+		let getRing = function(tile,tiles,distance){ // returns Point[]
+			let ring = [];
+			if(distance === 0){ return [tile.location]; }
+			let p = tile.location;
+			for(let i=0; i<distance; ++i){
+				ring.push( new Point(p.x + i, p.y - distance*2 + i) ); // n
+				ring.push( new Point(p.x+distance, p.y-distance + i*2) ); // ne
+				ring.push( new Point(p.x+distance - i, p.y+distance + i) ); // se
+				ring.push( new Point(p.x - i, p.y+distance*2 - i) ); // s
+				ring.push( new Point(p.x-distance, p.y+distance - i*2) ); // sw
+				ring.push( new Point(p.x-distance + i, p.y-distance - i) ); // nw
+			}
+			return ring;
+		}
+		let ring = getRing(this.tiles[0], this.tiles, 3);
+		for(let p of ring){
+			if(p.x > this.mapColumns){ p.x -= this.mapColumns; }
+			else if(p.x < 0){ p.x += this.mapColumns; }
+			let tile = this.getTileAtCoords(p);
+			if(tile){ tile.type = 1; }
 		}
 	}
 	getMapHeight(){
@@ -158,6 +188,11 @@ class Map {
 		if(position.x < -this.hexRad){ position.x += mapWidth; }
 		else if(position.x > mapWidth){ position.x -= mapWidth; }
 		return position;
+	}
+	getTileAtCoords(p){
+		for(let tile of this.tiles){
+			if(tile.location.equals(p)){ return tile; }
+		}
 	}
 	getTileFromHover(p){
 		let result = null;
