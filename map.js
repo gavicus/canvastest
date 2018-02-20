@@ -91,7 +91,7 @@ class Map {
 		
 		this.traceHex();
 
-		if(tile.type===1){
+		if(tile.type===0){ // water
 			if(options && options.fillStyle){ c.fillStyle = options.fillStyle; }
 			else{ c.fillStyle='#eee'; }
 			c.fill();
