@@ -6,6 +6,9 @@ class Point {
 	copy(){ // returns a new Point
 		return new Point(this.x, this.y);
 	}
+	getDistanceSquared(p){
+		return Math.pow(this.x-p.x, 2) + Math.pow(this.y-p.y, 2);
+	}
 	add(p){ // in-place
 		this.x += p.x;
 		this.y += p.y;
@@ -28,6 +31,7 @@ class Tile {
 	constructor(x,y){
 		this.location = new Point(x,y);
 		this.type=0;
+		this.screen = null;
 	}
 }
 
@@ -40,22 +44,29 @@ class Map {
 		this.focus = new Point(0,0);
 		this.tiles = [];
 		this.generateMap(20,10);
+		this.hoveredTile = null;
+		this.clickedTile = null;
+	}
+	click(){
+		this.clickedTile = this.hoveredTile;
 	}
 	draw(){
 		let c = this.context;
 		for(let i=0; i<this.tiles.length; ++i){
 			c.save();
 			let tile = this.tiles[i];
-			let position = this.getCoordScreetPosition(tile.location);
-			let mapWidth = this.getMapWidth();
-			if(position.x < -this.hexRad){ position.x += mapWidth; }
-			else if(position.x > mapWidth){ position.x -= mapWidth; }
+
+			let position = this.getDrawLocation(tile.location);
+
 			c.translate(position.x, position.y);
 			this.drawHex(tile);
+			tile.screen = position;
 			c.restore();
 		}
+		this.drawHoveredHex();
+		this.drawClickedHex();
 	}
-	drawHex(tile){
+	traceHex(){
 		let c = this.context;
 
 		c.beginPath();
@@ -70,13 +81,48 @@ class Map {
 		}
 		c.closePath();
 
+	}
+	drawHex(tile, options){
+		let c = this.context;
+		
+		this.traceHex();
+
 		if(tile.type===1){
-			c.fillStyle='#eee';
+			if(options && options.fillStyle){ c.fillStyle = options.fillStyle; }
+			else{ c.fillStyle='#eee'; }
 			c.fill();
 		}
 
 		c.strokeStyle = '#eee';
 		c.stroke();
+	}
+	drawHoveredHex(){
+		let h = this.hoveredTile;
+		if(!h){ return; }
+		let position = this.getDrawLocation(h.location);
+		let c = this.context;
+		c.save();
+		c.translate(position.x, position.y);
+
+		this.traceHex();
+		c.strokeStyle = 'gray';
+		c.stroke();
+
+		c.restore();
+	}
+	drawClickedHex(){
+		let h = this.clickedTile;
+		if(!h){ return; }
+		let position = this.getDrawLocation(h.location);
+		let c = this.context;
+		c.save();
+		c.translate(position.x, position.y);
+		c.beginPath();
+		c.arc(0,0, this.hexRad, 0, Math.PI*2);
+		c.strokeStyle = 'red';
+		c.stroke();
+
+		c.restore();
 	}
 	generateMap(w,h){
 		this.mapColumns = w;
@@ -106,6 +152,26 @@ class Map {
 		let ty = shift.y + coord.y * halfHeight
 		return new Point(tx,ty);
 	}
+	getDrawLocation(coord){
+		let position = this.getCoordScreetPosition(coord);
+		let mapWidth = this.getMapWidth();
+		if(position.x < -this.hexRad){ position.x += mapWidth; }
+		else if(position.x > mapWidth){ position.x -= mapWidth; }
+		return position;
+	}
+	getTileFromHover(p){
+		let result = null;
+		let minDist = Math.pow(this.hexRad,2);
+		let dist = 0;
+		for(let tile of this.tiles){
+			let d = p.getDistanceSquared(tile.screen);
+			if(d < minDist && (!result || d < dist)){
+				result = tile;
+				dist = d;
+			}
+		}
+		return result;
+	}
 	moveFocus(delta){
 		this.focus.subtract(delta);
 
@@ -125,5 +191,11 @@ class Map {
 			p.y * halfHeight
 		);
 		this.focus = screen;
+	}
+	setHoveredTile(p){
+		let h = this.getTileFromHover(p);
+		if(h === this.hoveredTile){ return false; }
+		this.hoveredTile = h;
+		return true;
 	}
 }
