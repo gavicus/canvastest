@@ -24,6 +24,12 @@ class Point {
 	}
 }
 
+class Tile {
+	constructor(x,y){
+		this.location = new Point(x,y);
+	}
+}
+
 class Map {
 	constructor(context, width, height){
 		this.context = context;
@@ -31,6 +37,8 @@ class Map {
 		this.screenHeight = height;
 		this.hexRad = 10;
 		this.focus = new Point(0,0);
+		this.tiles = [];
+		this.generateMap(16,8);
 	}
 	draw(){
 		let c = this.context;
@@ -38,14 +46,23 @@ class Map {
 			this.screenWidth/2 - this.focus.x,
 			this.screenHeight/2 - this.focus.y
 		);
-		c.save();
-		c.translate(shift.x, shift.y);
-		this.drawHex();
-		c.restore();
+		let halfHeight = this.hexRad * Math.sin(Math.PI/3);
+		for(let i=0; i<this.tiles.length; ++i){
+			c.save();
+			let tile = this.tiles[i];
+			let tx = shift.x + tile.location.x * this.hexRad * 1.5;
+			let ty = shift.y + tile.location.y * halfHeight
+			
+			console.log(tile.location.toString(),tx,ty);
+
+			c.translate(tx, ty);
+			this.drawHex();
+			c.restore();
+		}
 	}
 	drawHex(){
 		let c = this.context;
-		c.strokeStyle = 'gray';
+		c.strokeStyle = '#ccc';
 		c.beginPath();
 		for(let i=0; i<6; ++i){
 			if(i===0){ c.moveTo(this.hexRad,0); }
@@ -58,6 +75,14 @@ class Map {
 		}
 		c.closePath();
 		c.stroke();
+	}
+	generateMap(w,h){
+		this.tiles = [];
+		for(let x=0; x<w; ++x){
+			for(let y=0; y<h; ++y){
+				this.tiles.push(new Tile(x, (y*2)+x%2));
+			}
+		}
 	}
 	moveFocus(p){
 		this.focus.subtract(p);
