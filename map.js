@@ -35,6 +35,7 @@ class Tile {
 		this.location = new Point(x,y);
 		this.type=0;
 		this.screen = null;
+		this.elevation = 0;
 	}
 }
 
@@ -138,7 +139,7 @@ class Map {
 		for(let x=0; x<w; ++x){
 			for(let y=0; y<h; ++y){
 				let t = new Tile(x, (y*2)+x%2);
-				if(x===0&&y===0){t.type=1;}
+				// if(x===0&&y===0){t.type=1;}
 				this.tiles.push(t);
 			}
 		}
@@ -158,12 +159,27 @@ class Map {
 			}
 			return ring;
 		}
-		let ring = getRing(this.tiles[0], this.tiles, 5);
-		for(let p of ring){
-			if(p.x > this.mapColumns){ p.x -= this.mapColumns; }
-			else if(p.x < 0){ p.x += this.mapColumns; }
-			let tile = this.getTileAtCoords(p);
-			if(tile){ tile.type = 1; }
+		let bomb = function(target, map){
+			let height = utility.randomInt(-20,4);
+			for(let dist = 0; dist<height; ++dist){
+				let points = getRing(target, map.tiles, dist);
+				for(let p of points){
+					if(p.x >= map.mapColumns){ p.x -= map.mapColumns; }
+					else if(p.x < 0){ p.x += map.mapColumns; }
+					let tile = map.getTileAtCoords(p);
+					if(tile){
+						tile.elevation = height - dist;
+					}
+				}
+			}
+		}
+		let bombCount = 150;
+		for(let i=0; i<bombCount; ++i){
+			let tile = this.tiles[utility.randomInt(0,this.tiles.length-1)];
+			bomb(tile, this);
+		}
+		for(let tile of this.tiles){
+			if(tile.elevation > 0){ tile.type = 1; }
 		}
 	}
 	getMapHeight(){
