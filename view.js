@@ -11,6 +11,10 @@ class View {
 		c.rect(0,0,200,200);
 		c.fill();
 	}
+	click(){
+		this.map.click();
+		this.draw();
+	}
 	draw(){
 		this.clear();
 		this.map.draw();

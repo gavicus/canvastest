@@ -45,6 +45,10 @@ class Map {
 		this.tiles = [];
 		this.generateMap(20,10);
 		this.hoveredTile = null;
+		this.clickedTile = null;
+	}
+	click(){
+		this.clickedTile = this.hoveredTile;
 	}
 	draw(){
 		let c = this.context;
@@ -60,6 +64,7 @@ class Map {
 			c.restore();
 		}
 		this.drawHoveredHex();
+		this.drawClickedHex();
 	}
 	traceHex(){
 		let c = this.context;
@@ -100,7 +105,21 @@ class Map {
 		c.translate(position.x, position.y);
 
 		this.traceHex();
-		c.strokeStyle = 'black';
+		c.strokeStyle = 'gray';
+		c.stroke();
+
+		c.restore();
+	}
+	drawClickedHex(){
+		let h = this.clickedTile;
+		if(!h){ return; }
+		let position = this.getDrawLocation(h.location);
+		let c = this.context;
+		c.save();
+		c.translate(position.x, position.y);
+		c.beginPath();
+		c.arc(0,0, this.hexRad, 0, Math.PI*2);
+		c.strokeStyle = 'red';
 		c.stroke();
 
 		c.restore();
