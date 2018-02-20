@@ -19,12 +19,16 @@ class Control {
 			control.mouseDown = false;
 		});
 		$('#canvas').mousemove(function(event){
+			let current = new Point(event.offsetX, event.offsetY);
 			if(control.mouseDown){
-				let current = new Point(event.offsetX, event.offsetY);
 				let delta = current.minus(control.mouseLast);
 				control.mouseLast = current;
 				control.view.moveFocus(delta);
 				control.view.draw();
+			}
+			else{
+				let changed = control.view.map.setHoveredTile(current);
+				if(changed){ control.view.draw(); }
 			}
 		});
 	}
