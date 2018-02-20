@@ -27,6 +27,7 @@ class Point {
 class Tile {
 	constructor(x,y){
 		this.location = new Point(x,y);
+		this.type=0;
 	}
 }
 
@@ -38,31 +39,25 @@ class Map {
 		this.hexRad = 10;
 		this.focus = new Point(0,0);
 		this.tiles = [];
-		this.generateMap(16,8);
+		this.generateMap(20,10);
 	}
 	draw(){
 		let c = this.context;
-		let shift = new Point(
-			this.screenWidth/2 - this.focus.x,
-			this.screenHeight/2 - this.focus.y
-		);
-		let halfHeight = this.hexRad * Math.sin(Math.PI/3);
 		for(let i=0; i<this.tiles.length; ++i){
 			c.save();
 			let tile = this.tiles[i];
-			let tx = shift.x + tile.location.x * this.hexRad * 1.5;
-			let ty = shift.y + tile.location.y * halfHeight
-			
-			console.log(tile.location.toString(),tx,ty);
-
-			c.translate(tx, ty);
-			this.drawHex();
+			let position = this.getCoordScreetPosition(tile.location);
+			let mapWidth = this.getMapWidth();
+			if(position.x < -this.hexRad){ position.x += mapWidth; }
+			else if(position.x > mapWidth){ position.x -= mapWidth; }
+			c.translate(position.x, position.y);
+			this.drawHex(tile);
 			c.restore();
 		}
 	}
-	drawHex(){
+	drawHex(tile){
 		let c = this.context;
-		c.strokeStyle = '#ccc';
+
 		c.beginPath();
 		for(let i=0; i<6; ++i){
 			if(i===0){ c.moveTo(this.hexRad,0); }
@@ -74,18 +69,62 @@ class Map {
 			}
 		}
 		c.closePath();
+
+		if(tile.type===1){
+			c.fillStyle='#eee';
+			c.fill();
+		}
+
+		c.strokeStyle = '#eee';
 		c.stroke();
 	}
 	generateMap(w,h){
+		this.mapColumns = w;
+		this.mapRows = h;
 		this.tiles = [];
 		for(let x=0; x<w; ++x){
 			for(let y=0; y<h; ++y){
-				this.tiles.push(new Tile(x, (y*2)+x%2));
+				let t = new Tile(x, (y*2)+x%2);
+				if(x===0&&y===0){t.type=1;}
+				this.tiles.push(t);
 			}
 		}
 	}
-	moveFocus(p){
-		this.focus.subtract(p);
+	getMapHeight(){
+		return this.hexRad * Math.sin(Math.PI/3) * 2 * this.mapRows;
+	}
+	getMapWidth(){
+		return this.mapColumns * this.hexRad * 1.5;
+	}
+	getCoordScreetPosition(coord){
+		let shift = new Point(
+			this.screenWidth/2 - this.focus.x,
+			this.screenHeight/2 - this.focus.y
+		);
+		let halfHeight = this.hexRad * Math.sin(Math.PI/3);
+		let tx = shift.x + coord.x * this.hexRad * 1.5;
+		let ty = shift.y + coord.y * halfHeight
+		return new Point(tx,ty);
+	}
+	moveFocus(delta){
+		this.focus.subtract(delta);
+
+		let mapWidth = this.getMapWidth();
+		if(this.focus.x > mapWidth){ this.focus.x -= mapWidth; }
+		if(this.focus.x < 0){ this.focus.x += mapWidth; }
+
+		let miny = 0;
+		let maxy = this.getMapHeight();
+		if(this.focus.y > maxy){ this.focus.y = maxy; }
+		else if(this.focus.y < miny){ this.focus.y = miny; }
+	}
+	focusOnPoint(p){
+		let halfHeight = this.hexRad * Math.sin(Math.PI/3);
+		let screen = new Point(
+			p.x * this.hexRad * 1.5,
+			p.y * halfHeight
+		);
+		this.focus = screen;
 	}
 }
 
@@ -98,13 +137,22 @@ class View {
 	}
 	clear(){
 		let c = this.context;
-		c.fillStyle='#eee';
+		c.fillStyle='#ffffff';
 		c.rect(0,0,200,200);
 		c.fill();
 	}
 	draw(){
 		this.clear();
 		this.map.draw();
+
+		let c = this.context;
+		c.beginPath()
+		c.moveTo(0,0);
+		c.lineTo(200,200);
+		c.moveTo(200,0);
+		c.lineTo(0,200);
+		c.strokeStyle = '#eee';
+		c.stroke();
 	}
 	moveFocus(p){
 		this.map.moveFocus(p);
