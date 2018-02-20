@@ -158,7 +158,7 @@ class Map {
 			}
 			return ring;
 		}
-		let ring = getRing(this.tiles[0], this.tiles, 3);
+		let ring = getRing(this.tiles[0], this.tiles, 5);
 		for(let p of ring){
 			if(p.x > this.mapColumns){ p.x -= this.mapColumns; }
 			else if(p.x < 0){ p.x += this.mapColumns; }
