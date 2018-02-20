@@ -9,6 +9,9 @@ class Point {
 	getDistanceSquared(p){
 		return Math.pow(this.x-p.x, 2) + Math.pow(this.y-p.y, 2);
 	}
+	equals(p){
+		return p.x === this.x && p.y === this.y;
+	}
 	add(p){ // in-place
 		this.x += p.x;
 		this.y += p.y;
@@ -32,6 +35,7 @@ class Tile {
 		this.location = new Point(x,y);
 		this.type=0;
 		this.screen = null;
+		this.elevation = 0;
 	}
 }
 
@@ -125,15 +129,57 @@ class Map {
 		c.restore();
 	}
 	generateMap(w,h){
+		this.generateBlankMap(w,h);
+		this.generateContourMap();
+	}
+	generateBlankMap(w,h){
 		this.mapColumns = w;
 		this.mapRows = h;
 		this.tiles = [];
 		for(let x=0; x<w; ++x){
 			for(let y=0; y<h; ++y){
 				let t = new Tile(x, (y*2)+x%2);
-				if(x===0&&y===0){t.type=1;}
+				// if(x===0&&y===0){t.type=1;}
 				this.tiles.push(t);
 			}
+		}
+	}
+	generateContourMap(){
+		let getRing = function(tile,tiles,distance){ // returns Point[]
+			let ring = [];
+			if(distance === 0){ return [tile.location]; }
+			let p = tile.location;
+			for(let i=0; i<distance; ++i){
+				ring.push( new Point(p.x + i, p.y - distance*2 + i) ); // n
+				ring.push( new Point(p.x+distance, p.y-distance + i*2) ); // ne
+				ring.push( new Point(p.x+distance - i, p.y+distance + i) ); // se
+				ring.push( new Point(p.x - i, p.y+distance*2 - i) ); // s
+				ring.push( new Point(p.x-distance, p.y+distance - i*2) ); // sw
+				ring.push( new Point(p.x-distance + i, p.y-distance - i) ); // nw
+			}
+			return ring;
+		}
+		let bomb = function(target, map){
+			let height = utility.randomInt(-20,4);
+			for(let dist = 0; dist<height; ++dist){
+				let points = getRing(target, map.tiles, dist);
+				for(let p of points){
+					if(p.x >= map.mapColumns){ p.x -= map.mapColumns; }
+					else if(p.x < 0){ p.x += map.mapColumns; }
+					let tile = map.getTileAtCoords(p);
+					if(tile){
+						tile.elevation = height - dist;
+					}
+				}
+			}
+		}
+		let bombCount = 150;
+		for(let i=0; i<bombCount; ++i){
+			let tile = this.tiles[utility.randomInt(0,this.tiles.length-1)];
+			bomb(tile, this);
+		}
+		for(let tile of this.tiles){
+			if(tile.elevation > 0){ tile.type = 1; }
 		}
 	}
 	getMapHeight(){
@@ -158,6 +204,11 @@ class Map {
 		if(position.x < -this.hexRad){ position.x += mapWidth; }
 		else if(position.x > mapWidth){ position.x -= mapWidth; }
 		return position;
+	}
+	getTileAtCoords(p){
+		for(let tile of this.tiles){
+			if(tile.location.equals(p)){ return tile; }
+		}
 	}
 	getTileFromHover(p){
 		let result = null;
