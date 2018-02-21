@@ -45,14 +45,22 @@ class Map {
 		this.screenWidth = width;
 		this.screenHeight = height;
 		this.hexRad = 10;
-		this.focus = new Point(0,0);
 		this.tiles = [];
-		this.generateMap(20,10);
+		this.mapColumns = 20;
+		this.mapRows = 10;
+		this.focus = new Point(0, this.mapRows/2);
+		this.generateMap(this.mapColumns, this.mapRows);
 		this.hoveredTile = null;
 		this.clickedTile = null;
+		this.colors = {
+			hexLine: 'gray',
+			water: '#40a4df',
+		};
 	}
 	click(){
 		this.clickedTile = this.hoveredTile;
+		this.focusOnPoint(this.clickedTile.location);
+		console.log(this.clickedTile.location.toString());
 	}
 	draw(){
 		let c = this.context;
@@ -93,11 +101,11 @@ class Map {
 
 		if(tile.type===0){ // water
 			if(options && options.fillStyle){ c.fillStyle = options.fillStyle; }
-			else{ c.fillStyle='#eee'; }
+			else{ c.fillStyle=this.colors.water; }
 			c.fill();
 		}
 
-		c.strokeStyle = '#eee';
+		c.strokeStyle = this.colors.hexLine;
 		c.stroke();
 	}
 	drawHoveredHex(){
@@ -128,18 +136,15 @@ class Map {
 
 		c.restore();
 	}
-	generateMap(w,h){
-		this.generateBlankMap(w,h);
+	generateMap(){
+		this.generateBlankMap();
 		this.generateContourMap();
 	}
-	generateBlankMap(w,h){
-		this.mapColumns = w;
-		this.mapRows = h;
+	generateBlankMap(){
 		this.tiles = [];
-		for(let x=0; x<w; ++x){
-			for(let y=0; y<h; ++y){
+		for(let x=0; x<this.mapColumns; ++x){
+			for(let y=0; y<this.mapRows; ++y){
 				let t = new Tile(x, (y*2)+x%2);
-				// if(x===0&&y===0){t.type=1;}
 				this.tiles.push(t);
 			}
 		}

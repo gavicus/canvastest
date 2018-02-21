@@ -15,7 +15,6 @@ class Control {
 			control.moved = false;
 		});
 		$('#canvas').mouseup(function(event){
-			console.log('control.mouseup');
 			control.mouseDown = false;
 			if(!control.moved){
 				control.view.click();
