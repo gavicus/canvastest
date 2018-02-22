@@ -1,41 +1,12 @@
-class Point {
-	constructor(px,py){
-		this.x = px;
-		this.y = py;
-	}
-	copy(){ // returns a new Point
-		return new Point(this.x, this.y);
-	}
-	getDistanceSquared(p){
-		return Math.pow(this.x-p.x, 2) + Math.pow(this.y-p.y, 2);
-	}
-	equals(p){
-		return p.x === this.x && p.y === this.y;
-	}
-	add(p){ // in-place
-		this.x += p.x;
-		this.y += p.y;
-	}
-	subtract(p){ // in-place
-		this.x -= p.x;
-		this.y -= p.y;
-	}
-	minus(p){ // returns a new Point
-		let result = this.copy();
-		result.subtract(p);
-		return result;
-	}
-	toString(){
-		return '('+this.x+','+this.y+')';
-	}
-}
-
 class Tile {
 	constructor(x,y){
-		this.location = new Point(x,y);
+		this.coord = new Point(x,y);
 		this.type=0;
 		this.screen = null;
 		this.elevation = 0;
+	}
+	isLandTile(){
+		return this.type > 0;
 	}
 }
 
@@ -57,11 +28,18 @@ class Map {
 			water: '#40a4df',
 		};
 		this.factions = [];
+		this.createFaction();
 	}
 	click(){
 		this.clickedTile = this.hoveredTile;
-		this.focusOnPoint(this.clickedTile.location);
-		console.log(this.clickedTile.location.toString());
+		this.focusOnPoint(this.clickedTile.coord);
+		console.log(this.clickedTile.coord.toString());
+	}
+	createFaction(){
+		let f = new Faction();
+		let tile = getRandomLandTile();
+		f.initNew(tile.coord);
+		this.factions.push(f);
 	}
 	draw(){
 		let c = this.context;
@@ -69,7 +47,7 @@ class Map {
 			c.save();
 			let tile = this.tiles[i];
 
-			let position = this.getDrawLocation(tile.location);
+			let position = this.getDrawLocation(tile.coord);
 
 			c.translate(position.x, position.y);
 			this.drawHex(tile);
@@ -112,7 +90,7 @@ class Map {
 	drawHoveredHex(){
 		let h = this.hoveredTile;
 		if(!h){ return; }
-		let position = this.getDrawLocation(h.location);
+		let position = this.getDrawLocation(h.coord);
 		let c = this.context;
 		c.save();
 		c.translate(position.x, position.y);
@@ -126,7 +104,7 @@ class Map {
 	drawClickedHex(){
 		let h = this.clickedTile;
 		if(!h){ return; }
-		let position = this.getDrawLocation(h.location);
+		let position = this.getDrawLocation(h.coord);
 		let c = this.context;
 		c.save();
 		c.translate(position.x, position.y);
@@ -153,8 +131,8 @@ class Map {
 	generateContourMap(){
 		let getRing = function(tile,tiles,distance){ // returns Point[]
 			let ring = [];
-			if(distance === 0){ return [tile.location]; }
-			let p = tile.location;
+			if(distance === 0){ return [tile.coord]; }
+			let p = tile.coord;
 			for(let i=0; i<distance; ++i){
 				ring.push( new Point(p.x + i, p.y - distance*2 + i) ); // n
 				ring.push( new Point(p.x+distance, p.y-distance + i*2) ); // ne
@@ -211,9 +189,18 @@ class Map {
 		else if(position.x > mapWidth){ position.x -= mapWidth; }
 		return position;
 	}
+	getRandomLandTile(){
+		let tile = null;
+		while(tile === null){
+			let roll = utility.randomInt(0,this.tiles.length-1);
+			let t = this.tiles[roll];
+			if(t.isLandTile()){ tile = t; }
+		}
+		return tile;
+	}
 	getTileAtCoords(p){
 		for(let tile of this.tiles){
-			if(tile.location.equals(p)){ return tile; }
+			if(tile.coord.equals(p)){ return tile; }
 		}
 	}
 	getTileFromHover(p){
