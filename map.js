@@ -56,6 +56,7 @@ class Map {
 			hexLine: 'gray',
 			water: '#40a4df',
 		};
+		this.factions = [];
 	}
 	click(){
 		this.clickedTile = this.hoveredTile;
