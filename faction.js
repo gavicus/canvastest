@@ -2,6 +2,7 @@ Domains = {ground:0, air:1, sea:2};
 
 Units = {
 	types: {
+		base:{ typeid: 'base', domain: Domains.ground, speed:[0, 0], attack:[0,0], defense:[1,0], range:[0,0], },
 		pod:{
 			typeid: 'pod',
 			domain: Domains.ground,
