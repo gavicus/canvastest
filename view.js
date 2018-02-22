@@ -1,6 +1,6 @@
 class View {
 	constructor () {
-		this.debug = false;
+		this.debug = true;
 		this.canvas = $('#canvas').get(0);
 		console.log('canvas',this.canvas);
 		this.context = this.canvas.getContext('2d');

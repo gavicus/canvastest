@@ -28,6 +28,7 @@ class Map {
 			water: '#40a4df',
 		};
 		this.factions = [];
+
 		this.createFaction();
 	}
 	click(){
@@ -37,12 +38,13 @@ class Map {
 	}
 	createFaction(){
 		let f = new Faction();
-		let tile = getRandomLandTile();
+		let tile = this.getRandomLandTile();
 		f.initNew(tile.coord);
 		this.factions.push(f);
 	}
 	draw(){
 		let c = this.context;
+
 		for(let i=0; i<this.tiles.length; ++i){
 			c.save();
 			let tile = this.tiles[i];
@@ -54,8 +56,47 @@ class Map {
 			tile.screen = position;
 			c.restore();
 		}
+
+		for(let faction of this.factions){
+			for(let group of faction.groups){
+				let position = this.getDrawLocation(group.coord);
+				c.save();
+				c.strokeStyle = '#888'; // get stroke style from faction
+				c.translate(position.x, position.y);
+				this.drawGroup(group);
+				c.restore();
+			}
+		}
+
 		this.drawHoveredHex();
 		this.drawClickedHex();
+	}
+	drawGroup(group){
+		let c = this.context;
+		let domain = group.getDomain();
+		c.beginPath();
+		if(domain === Domains.ground){
+			let halfw = this.hexRad * 0.3;
+			c.moveTo(-halfw, -halfw);
+			c.lineTo(halfw, -halfw);
+			c.lineTo(halfw, halfw);
+			c.lineTo(-halfw, halfw);
+		}
+		else if(domain === Domains.air){
+			let halfw = this.hexRad * 0.8;
+			let theta = -Math.PI/2;
+			c.moveTo(0, halfw*Math.sin(theta));
+			theta += Math.PI * 2/3;
+			c.lineTo(halfw*Math.cos(theta), halfw*Math.sin(theta));
+			theta += Math.PI * 2/3;
+			c.lineTo(halfw*Math.cos(theta), halfw*Math.sin(theta));
+		}
+		else if(domain === Domains.sea){
+			let rad = this.hexRad * 0.7;
+			c.arc(0,0,rad,0,2*Math.PI);
+		}
+		c.closePath();
+		c.stroke();
 	}
 	traceHex(){
 		let c = this.context;
