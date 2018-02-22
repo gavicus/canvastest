@@ -1,30 +1,52 @@
+Domains = {ground:0, air:1, sea:2};
+
 Units = {
-	enums: {
-		types: {ground:0, air:1, sea:2},
-	},
-	types: [
-		pod: {
+	types: {
+		base:{ typeid: 'base', domain: Domains.ground, speed:[0, 0], attack:[0,0], defense:[1,0], range:[0,0], },
+		pod:{
+			typeid: 'pod',
+			domain: Domains.ground,
 			speed:[1, 0],
-			type:Units.enums.types.ground,
-			attack:0,
-			defense:1,
+			attack:[0,0],
+			defense:[1,0],
+			range:[0,0],
 		},
-		infantry: {
+		infantry:{
+			typeid: 'infantry',
+			domain: Domains.ground,
 			speed:[1, 0.1],
-			type:Units.enums.types.ground,
 			attack:[1,0.2],
 			defense:[1,0.2],
+			range:[1,0],
 		},
-	],
+		fighter:{
+			typeid: 'fighter',
+			domain: Domains.air,
+			speed:[8, 0],
+			attack:[1,0.2],
+			defense:[1,0.2],
+			range:[5,0],
+		},
+		cutter:{
+			typeid: 'cutter',
+			domain:Domains.sea,
+			speed:[3,0],
+			attack:[2,0.1],
+			defense:[2,0.1],
+			range:[1,0],
+		},
+	},
 };
 
 class Unit {
 	constructor(typeData){
-		this.type=typeData.type;
+		this.typeid = typeData.typeid;
+		this.domain = typeData.domain;
 		this.speed = typeData.speed;
 		this.attack = typeData.attack;
 		this.defense = typeData.defense;
 		this.xp = 0;
+		this.damage = 0;
 	}
 	computeStat(stat){
 		return stat[0] + Math.floor(stat * this.getLevel());
@@ -43,16 +65,15 @@ class Group {
 		this.coord = coord.copy();
 	}
 	addUnit(u){ this.units.push(u); }
-	getType(){
-		let t = Units.enums.types;
-		let type = t.ground;
+	getDomain(){
+		let domain = Domains.ground;
 		for(let u of this.units){
-			if(u.type > type){ type = u.type; }
+			if(u.domain > domain){ domain = u.domain; }
 		}
-		return type;
+		return domain;
 	}
-	getSpeed(domain){
-		let type = this.getType();
+	getSpeed(tileDomain){
+		let domain = this.getDomain();
 	}
 }
 
@@ -61,11 +82,22 @@ class Faction {
 		this.groups = [];
 	}
 	initNew(coord){
-		let g = new Group(coord);
+		let g;
+		
+		g = new Group(coord);
 		g.addUnit(new Unit(Units.types.pod));
 		this.groups.push(g);
+
 		g = new Group(coord);
 		g.addUnit(new Unit(Units.types.infantry));
+		this.groups.push(g);
+
+		g = new Group(coord);
+		g.addUnit(new Unit(Units.types.fighter));
+		this.groups.push(g);
+
+		g = new Group(coord);
+		g.addUnit(new Unit(Units.types.cutter));
 		this.groups.push(g);
 	}
 }
